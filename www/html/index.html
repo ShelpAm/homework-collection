@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作业提交</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      color: #495057;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      border: 1px solid #dee2e6;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #343a40;
+      font-size: 26px;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 16px;
+      font-size: 18px;
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 24px;
+      font-size: 16px;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    input[type="submit"] {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+      transform: scale(1.05);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    input[type="submit"]:active {
+      background-color: #004085;
+      transform: scale(1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>提交作业</h1>
+    <form action="http://154.7.177.38:8080/api/process-homework" method="post" enctype="multipart/form-data">
+      <label for="file">选择文件:</label>
+      <input type="file" id="file" name="homework" accept="*/*" required>
+      <br>
+      <input type="submit" value="提交">
+    </form>
+  </div>
+</body>
+
+</html>

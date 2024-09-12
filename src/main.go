@@ -42,7 +42,7 @@ func main() {
 		}
 
 		fmt.Fprintf(w, "Homework submitted successfully")
-		log.Println("Received file ", filename)
+		log.Println("Received file", filename)
 	})
 
 	log.Println("Server is listening on port 8080")
