@@ -10,7 +10,9 @@ import (
 )
 
 func main() {
-    http.HandleFunc("/process-homework", func(w http.ResponseWriter, r *http.Request) {
+    os.Mkdir("homeworks", 0755)
+
+    http.HandleFunc("/api/process-homework", func(w http.ResponseWriter, r *http.Request) {
         if r.Method != "POST" {
             http.Error(w, "Invalid request method", http.StatusBadRequest)
             return
