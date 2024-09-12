@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"fmt"
 	"io"
 	"log"
@@ -8,6 +9,40 @@ import (
 	"os"
 	"path/filepath"
 )
+
+func MakeZip(out string, dir string) error {
+	zipFile, err := os.Create(out)
+	if err != nil {
+		return err
+	}
+	defer zipFile.Close()
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			filename := filepath.Base(path)
+
+			_, err = zipWriter.Create(filename)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
 
 func main() {
 	os.Mkdir("homeworks", 0755)
@@ -43,6 +78,29 @@ func main() {
 
 		fmt.Fprintf(w, "Homework submitted successfully")
 		log.Println("Received file", filename)
+	})
+
+	http.HandleFunc("/api/export-to-zip", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, "Invalid request method, please use GET", http.StatusBadRequest)
+			return
+		}
+
+		os.Mkdir("zip", 0755)
+		zipPath := "zip/exported.zip"
+		os.Remove(zipPath)
+
+		err := MakeZip(zipPath, "homeworks")
+		if err != nil {
+			http.Error(w, "Cannot make zip file, 请联系杨扬骁。", http.StatusInternalServerError)
+			log.Println("Cannot make zip file")
+		}
+
+		w.Header().Set("Content-Disposition", "attachment; filename=exported.zip")
+		w.Header().Set("Content-Type", "application/zip")
+		http.ServeFile(w, r, zipPath)
+
+    log.Println("Zip was exported successfully")
 	})
 
 	log.Println("Server is listening on port 8080")
