@@ -34,7 +34,12 @@ func MakeZip(out string, dir string) error {
 
 			filename := filepath.Base(path)
 
-			_, err = zipWriter.Create(filename)
+			writer, err := zipWriter.Create(filename)
+			if err != nil {
+				return err
+			}
+
+			_, err = io.Copy(writer, file)
 			if err != nil {
 				return err
 			}
@@ -100,7 +105,7 @@ func main() {
 		w.Header().Set("Content-Type", "application/zip")
 		http.ServeFile(w, r, zipPath)
 
-    log.Println("Zip was exported successfully")
+		log.Println("Zip was exported successfully")
 	})
 
 	log.Println("Server is listening on port 8080")
