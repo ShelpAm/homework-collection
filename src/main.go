@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 )
 
 func MakeZip(out string, dir string) error {
@@ -69,6 +71,43 @@ func IsBadFilename(filename string) bool {
 	return false
 }
 
+var requestCounts = make(map[string]int)
+var mutex = &sync.Mutex{}
+
+// Rate limiter middleware
+func RateLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := r.RemoteAddr
+		ip = strings.Split(ip, ":")[0] // Extract the IP without the port
+
+		mutex.Lock()
+
+		// Increment request count for the IP
+		requestCounts[ip]++
+
+		// Set a time window to reset the counter every minute
+		go func() {
+			time.Sleep(1 * time.Minute)
+			mutex.Lock()
+			delete(requestCounts, ip) // Reset request count after 1 minute
+			mutex.Unlock()
+		}()
+
+		// Check if the IP exceeds the limit (e.g., 60 requests per minute)
+		if requestCounts[ip] > 60 {
+			mutex.Unlock()
+			http.Error(w, "Too many requests, please try again later.", http.StatusTooManyRequests)
+			log.Println("IP banned due to excessive requests:", ip)
+			return
+		}
+
+		mutex.Unlock()
+
+		// Proceed to the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	testMode := len(os.Args) == 2 && os.Args[1] == "--test"
 
@@ -78,7 +117,7 @@ func main() {
 
 	os.Mkdir("homeworks", 0755)
 
-	http.HandleFunc("/api/process-homework", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, "Invalid request method", http.StatusBadRequest)
 			return
@@ -96,7 +135,7 @@ func main() {
 
 		if IsBadFilename(filename) {
 			http.Error(w, "Don't attack my server plz", http.StatusInternalServerError)
-      log.Println("Bad file received:", filename)
+			log.Println("Bad file received:", filename)
 			return
 		}
 
@@ -115,15 +154,15 @@ func main() {
 			}
 		}
 
-    if testMode {
-      log.Print("TEST MODE: ")
-    }
+		if testMode {
+			log.Print("TEST MODE: ")
+		}
 
 		fmt.Fprintf(w, "Homework submitted successfully")
 		log.Println("Received file", filename)
-	})
+	})))
 
-	http.HandleFunc("/api/export-to-zip", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			http.Error(w, "Invalid request method, please use GET", http.StatusBadRequest)
 			return
@@ -144,7 +183,7 @@ func main() {
 		http.ServeFile(w, r, zipPath)
 
 		log.Println("Zip was exported successfully")
-	})
+	})))
 
 	log.Println("Server is listening on port 8080")
 	http.ListenAndServe(":8080", nil)
