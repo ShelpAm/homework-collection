@@ -94,7 +94,7 @@ func RateLimit(next http.Handler) http.Handler {
 		}()
 
 		// Check if the IP exceeds the limit (e.g., 60 requests per minute)
-		if requestCounts[ip] > 60 {
+		if requestCounts[ip] > 10 {
 			mutex.Unlock()
 			http.Error(w, "Too many requests, please try again later.", http.StatusTooManyRequests)
 			log.Println("IP banned due to excessive requests:", ip)
