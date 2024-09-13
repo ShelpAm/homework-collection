@@ -96,6 +96,7 @@ func main() {
 
 		if IsBadFilename(filename) {
 			http.Error(w, "Don't attack my server plz", http.StatusInternalServerError)
+      log.Println("Bad file received:", filename)
 			return
 		}
 
