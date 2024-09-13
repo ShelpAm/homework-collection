@@ -70,6 +70,12 @@ func IsBadFilename(filename string) bool {
 }
 
 func main() {
+	testMode := os.Args[1] == "--test"
+
+  if testMode {
+    log.Println("RUN in TEST MODE")
+  }
+
 	os.Mkdir("homeworks", 0755)
 
 	http.HandleFunc("/api/process-homework", func(w http.ResponseWriter, r *http.Request) {
@@ -93,18 +99,22 @@ func main() {
 			return
 		}
 
-		f, err := os.Create(filepath)
-		if err != nil {
-			http.Error(w, "Failed to create file", http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
+		if !testMode {
+			f, err := os.Create(filepath)
+			if err != nil {
+				http.Error(w, "Failed to create file", http.StatusInternalServerError)
+				return
+			}
+			defer f.Close()
 
-		_, err = io.Copy(f, file)
-		if err != nil {
-			http.Error(w, "Failed to copy file", http.StatusInternalServerError)
-			return
+			_, err = io.Copy(f, file)
+			if err != nil {
+				http.Error(w, "Failed to copy file", http.StatusInternalServerError)
+				return
+			}
 		}
+
+		log.Print("TEST MODE: ")
 
 		fmt.Fprintf(w, "Homework submitted successfully")
 		log.Println("Received file", filename)
