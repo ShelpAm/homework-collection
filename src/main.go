@@ -70,11 +70,11 @@ func IsBadFilename(filename string) bool {
 }
 
 func main() {
-	testMode := os.Args[1] == "--test"
+	testMode := len(os.Args) == 2 && os.Args[1] == "--test"
 
-  if testMode {
-    log.Println("RUN in TEST MODE")
-  }
+	if testMode {
+		log.Println("RUN in TEST MODE")
+	}
 
 	os.Mkdir("homeworks", 0755)
 
