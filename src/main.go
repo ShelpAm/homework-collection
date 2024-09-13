@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 )
 
 func MakeZip(out string, dir string) error {
@@ -49,6 +51,24 @@ func MakeZip(out string, dir string) error {
 	})
 }
 
+func IsBadFilename(filename string) bool {
+	if strings.ContainsAny(filename, "/\\") {
+		return true
+	}
+
+	ext := filepath.Ext(filename)
+	allowed := []string{".zip", ".7z", ".gz", ".rar", ".xz"}
+	contains := slices.IndexFunc(allowed, func(e string) bool {
+		return e == ext
+	}) != -1
+
+	if !contains {
+		return true
+	}
+
+	return false
+}
+
 func main() {
 	os.Mkdir("homeworks", 0755)
 
@@ -67,6 +87,11 @@ func main() {
 
 		filename := header.Filename
 		filepath := filepath.Join("homeworks", filename)
+
+		if IsBadFilename(filename) {
+			http.Error(w, "Don't attack my server plz", http.StatusInternalServerError)
+			return
+		}
 
 		f, err := os.Create(filepath)
 		if err != nil {
