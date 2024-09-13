@@ -71,14 +71,27 @@ func IsBadFilename(filename string) bool {
 	return false
 }
 
+func GetClientIP(r *http.Request) string {
+    // Check if the request has the X-Forwarded-For header
+    forwarded := r.Header.Get("X-Forwarded-For")
+    if forwarded != "" {
+        // X-Forwarded-For may contain multiple IPs, the first one is the original client IP
+        return strings.Split(forwarded, ",")[0]
+    }
+
+    // If X-Forwarded-For is not set, fall back to RemoteAddr
+    ip := r.RemoteAddr
+    ip = strings.Split(ip, ":")[0] // Extract the IP without the port
+    return ip
+}
+
 var requestCounts = make(map[string]int)
 var mutex = &sync.Mutex{}
 
 // Rate limiter middleware
 func RateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := r.RemoteAddr
-		ip = strings.Split(ip, ":")[0] // Extract the IP without the port
+		ip := GetClientIP(r)
 
 		mutex.Lock()
 
