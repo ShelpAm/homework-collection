@@ -115,7 +115,9 @@ func main() {
 			}
 		}
 
-		log.Print("TEST MODE: ")
+    if testMode {
+      log.Print("TEST MODE: ")
+    }
 
 		fmt.Fprintf(w, "Homework submitted successfully")
 		log.Println("Received file", filename)
