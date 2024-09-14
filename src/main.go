@@ -187,7 +187,7 @@ func main() {
 
 	os.Mkdir("homeworks", 0755)
 
-	http.Handle("/list-files", http.HandlerFunc(ListFiles))
+	http.Handle("/home/list-files", http.HandlerFunc(ListFiles))
 
 	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
