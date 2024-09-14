@@ -1,132 +1,13 @@
 package main
 
 import (
-	"archive/zip"
-	"fmt"
-	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"slices"
 	"strings"
 	"sync"
 	"time"
 )
-
-// Define the FileData struct
-type FileData struct {
-	Name string
-	Path string
-}
-
-func ListFiles(w http.ResponseWriter, _ *http.Request) {
-	dir := "./homeworks" // Change this to the directory you want to list
-
-	// Read directory contents
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		http.Error(w, "Unable to read directory", http.StatusInternalServerError)
-		return
-	}
-
-	// Prepare file data to pass to the template
-	var fileData []FileData
-	for _, file := range files {
-		fileData = append(fileData, FileData{
-			Name: file.Name(),
-			Path: filepath.Join(dir, file.Name()),
-		})
-	}
-
-	// Parse and execute the template
-	tmpl := `
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<title>File List</title>
-	</head>
-	<body>
-		<h1>Files in Directory</h1>
-		<ul>
-			{{range .}}
-				<li><a href="/files/{{.Name}}">{{.Name}}</a></li>
-			{{end}}
-		</ul>
-	</body>
-	</html>
-	`
-	t, err := template.New("filelist").Parse(tmpl)
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-
-	// Serve the rendered template with file data
-	err = t.Execute(w, fileData)
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-	}
-}
-
-func MakeZip(out string, dir string) error {
-	zipFile, err := os.Create(out)
-	if err != nil {
-		return err
-	}
-	defer zipFile.Close()
-
-	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
-
-	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.IsDir() {
-			file, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-
-			filename := filepath.Base(path)
-
-			writer, err := zipWriter.Create(filename)
-			if err != nil {
-				return err
-			}
-
-			_, err = io.Copy(writer, file)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
-func IsBadFilename(filename string) bool {
-	if strings.ContainsAny(filename, "/\\") {
-		return true
-	}
-
-	ext := filepath.Ext(filename)
-	allowed := []string{".zip", ".7z", ".gz", ".rar", ".xz"}
-	contains := slices.IndexFunc(allowed, func(e string) bool {
-		return e == ext
-	}) != -1
-
-	if !contains {
-		return true
-	}
-
-	return false
-}
 
 func GetClientIP(r *http.Request) string {
 	// Check if the request has the X-Forwarded-For header
@@ -178,8 +59,10 @@ func RateLimit(next http.Handler) http.Handler {
 	})
 }
 
+var testMode bool
+
 func main() {
-	testMode := len(os.Args) == 2 && os.Args[1] == "--test"
+	testMode = len(os.Args) == 2 && os.Args[1] == "--test"
 
 	if testMode {
 		log.Println("RUN in TEST MODE")
@@ -187,75 +70,9 @@ func main() {
 
 	os.Mkdir("homeworks", 0755)
 
+	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(ProcessHomework)))
+	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(ExportToZip)))
 	http.Handle("/home/list-files", http.HandlerFunc(ListFiles))
-
-	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, "Invalid request method", http.StatusBadRequest)
-			return
-		}
-
-		file, header, err := r.FormFile("homework")
-		if err != nil {
-			http.Error(w, "Failed to get file", http.StatusBadRequest)
-			return
-		}
-		defer file.Close()
-
-		filename := header.Filename
-		filepath := filepath.Join("homeworks", filename)
-
-		if IsBadFilename(filename) {
-			http.Error(w, "You received this message due to that you have uploaded suspicious file. Don't attack my server plz", http.StatusInternalServerError)
-			log.Println("Bad file received:", filename)
-			return
-		}
-
-		if !testMode {
-			f, err := os.Create(filepath)
-			if err != nil {
-				http.Error(w, "Failed to create file", http.StatusInternalServerError)
-				return
-			}
-			defer f.Close()
-
-			_, err = io.Copy(f, file)
-			if err != nil {
-				http.Error(w, "Failed to copy file", http.StatusInternalServerError)
-				return
-			}
-		}
-
-		if testMode {
-			log.Print("TEST MODE: ")
-		}
-
-		fmt.Fprintf(w, "Homework submitted successfully")
-		log.Println("Received file", filename)
-	})))
-
-	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			http.Error(w, "Invalid request method, please use GET", http.StatusBadRequest)
-			return
-		}
-
-		os.Mkdir("zip", 0755)
-		zipPath := "zip/exported.zip"
-		os.Remove(zipPath)
-
-		err := MakeZip(zipPath, "homeworks")
-		if err != nil {
-			http.Error(w, "Cannot make zip file, 请联系服务器管理员。", http.StatusInternalServerError)
-			log.Println("Cannot make zip file")
-		}
-
-		w.Header().Set("Content-Disposition", "attachment; filename=exported.zip")
-		w.Header().Set("Content-Type", "application/zip")
-		http.ServeFile(w, r, zipPath)
-
-		log.Println("Zip was exported successfully")
-	})))
 
 	log.Println("Server is listening on port 8080")
 	http.ListenAndServe(":8080", nil)
