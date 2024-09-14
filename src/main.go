@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -13,6 +14,62 @@ import (
 	"sync"
 	"time"
 )
+
+// Define the FileData struct
+type FileData struct {
+	Name string
+	Path string
+}
+
+func ListFiles(w http.ResponseWriter, _ *http.Request) {
+	dir := "./homeworks" // Change this to the directory you want to list
+
+	// Read directory contents
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		http.Error(w, "Unable to read directory", http.StatusInternalServerError)
+		return
+	}
+
+	// Prepare file data to pass to the template
+	var fileData []FileData
+	for _, file := range files {
+		fileData = append(fileData, FileData{
+			Name: file.Name(),
+			Path: filepath.Join(dir, file.Name()),
+		})
+	}
+
+	// Parse and execute the template
+	tmpl := `
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>File List</title>
+	</head>
+	<body>
+		<h1>Files in Directory</h1>
+		<ul>
+			{{range .}}
+				<li><a href="/files/{{.Name}}">{{.Name}}</a></li>
+			{{end}}
+		</ul>
+	</body>
+	</html>
+	`
+	t, err := template.New("filelist").Parse(tmpl)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
+
+	// Serve the rendered template with file data
+	err = t.Execute(w, fileData)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
+}
 
 func MakeZip(out string, dir string) error {
 	zipFile, err := os.Create(out)
@@ -72,17 +129,17 @@ func IsBadFilename(filename string) bool {
 }
 
 func GetClientIP(r *http.Request) string {
-    // Check if the request has the X-Forwarded-For header
-    forwarded := r.Header.Get("X-Forwarded-For")
-    if forwarded != "" {
-        // X-Forwarded-For may contain multiple IPs, the first one is the original client IP
-        return strings.Split(forwarded, ",")[0]
-    }
+	// Check if the request has the X-Forwarded-For header
+	forwarded := r.Header.Get("X-Forwarded-For")
+	if forwarded != "" {
+		// X-Forwarded-For may contain multiple IPs, the first one is the original client IP
+		return strings.Split(forwarded, ",")[0]
+	}
 
-    // If X-Forwarded-For is not set, fall back to RemoteAddr
-    ip := r.RemoteAddr
-    ip = strings.Split(ip, ":")[0] // Extract the IP without the port
-    return ip
+	// If X-Forwarded-For is not set, fall back to RemoteAddr
+	ip := r.RemoteAddr
+	ip = strings.Split(ip, ":")[0] // Extract the IP without the port
+	return ip
 }
 
 var requestCounts = make(map[string]int)
@@ -130,6 +187,8 @@ func main() {
 
 	os.Mkdir("homeworks", 0755)
 
+	http.Handle("/list-files", http.HandlerFunc(ListFiles))
+
 	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, "Invalid request method", http.StatusBadRequest)
@@ -147,7 +206,7 @@ func main() {
 		filepath := filepath.Join("homeworks", filename)
 
 		if IsBadFilename(filename) {
-			http.Error(w, "Don't attack my server plz", http.StatusInternalServerError)
+			http.Error(w, "You received this message due to that you have uploaded suspicious file. Don't attack my server plz", http.StatusInternalServerError)
 			log.Println("Bad file received:", filename)
 			return
 		}
@@ -187,7 +246,7 @@ func main() {
 
 		err := MakeZip(zipPath, "homeworks")
 		if err != nil {
-			http.Error(w, "Cannot make zip file, 请联系杨扬骁。", http.StatusInternalServerError)
+			http.Error(w, "Cannot make zip file, 请联系服务器管理员。", http.StatusInternalServerError)
 			log.Println("Cannot make zip file")
 		}
 
