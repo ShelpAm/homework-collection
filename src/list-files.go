@@ -46,6 +46,7 @@ func ListFiles(w http.ResponseWriter, _ *http.Request) {
 				<li><a href="/files/{{.Name}}">{{.Name}}</a></li>
 			{{end}}
 		</ul>
+    <p>Totally {{len .}} files.</p>
 	</body>
 	</html>
 	`
