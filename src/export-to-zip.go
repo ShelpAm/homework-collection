@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 )
 
 // Define the FileData struct
@@ -49,24 +47,6 @@ func MakeZip(out string, dir string) error {
 
 		return nil
 	})
-}
-
-func IsBadFilename(filename string) bool {
-	if strings.ContainsAny(filename, "/\\") {
-		return true
-	}
-
-	ext := filepath.Ext(filename)
-	allowed := []string{".zip", ".7z", ".gz", ".rar", ".xz"}
-	if !slices.Contains(allowed, ext) {
-		return true
-	}
-
-	if !strings.Contains(filename, "-") {
-		return true
-	}
-
-	return false
 }
 
 func ExportToZip(w http.ResponseWriter, r *http.Request) {

@@ -7,7 +7,27 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 )
+
+func IsBadFilename(filename string) bool {
+	if strings.ContainsAny(filename, "/\\") {
+		return true
+	}
+
+	ext := filepath.Ext(filename)
+	allowed := []string{".zip", ".7z", ".gz", ".rar", ".xz"}
+	if !slices.Contains(allowed, ext) {
+		return true
+	}
+
+	if !strings.Contains(filename, "-") {
+		return true
+	}
+
+	return false
+}
 
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -26,7 +46,7 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	filepath := filepath.Join("homeworks", filename)
 
 	if IsBadFilename(filename) {
-		http.Error(w, "You received this message due to that you have uploaded suspicious file. Don't attack my server plz", http.StatusInternalServerError)
+		http.Error(w, "You received this message due to that you have uploaded suspicious file. If you have further questions, please contact the admininstrator of this server (yyx).", http.StatusInternalServerError)
 		log.Println("Bad file received:", filename)
 		return
 	}
