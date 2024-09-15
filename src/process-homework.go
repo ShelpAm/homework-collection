@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -29,7 +30,22 @@ func IsBadFilename(filename string) bool {
 	return false
 }
 
+type Response struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+func Respond(w http.ResponseWriter, r Response) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK) // HTTP 200 OK
+	json.NewEncoder(w).Encode(r)
+}
+
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	if r.Method != "POST" {
 		http.Error(w, "Invalid request method", http.StatusBadRequest)
 		return
@@ -46,7 +62,9 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	filepath := filepath.Join("homeworks", filename)
 
 	if IsBadFilename(filename) {
-		http.Error(w, "You received this message due to that you have uploaded suspicious file. If you have further questions, please contact the admininstrator of this server (yyx).", http.StatusInternalServerError)
+		http.Error(w, "You received this message due to that you have uploaded suspicious file."+
+			"If you have further questions, please contact the admininstrator of this server (yyx).",
+			http.StatusBadRequest)
 		log.Println("Bad file received:", filename)
 		return
 	}
