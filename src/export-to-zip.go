@@ -58,11 +58,11 @@ func IsBadFilename(filename string) bool {
 
 	ext := filepath.Ext(filename)
 	allowed := []string{".zip", ".7z", ".gz", ".rar", ".xz"}
-	contains := slices.IndexFunc(allowed, func(e string) bool {
-		return e == ext
-	}) != -1
+	if !slices.Contains(allowed, ext) {
+		return true
+	}
 
-	if !contains {
+	if !strings.Contains(filename, "-") {
 		return true
 	}
 
