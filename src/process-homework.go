@@ -62,8 +62,9 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	filepath := filepath.Join("homeworks", filename)
 
 	if IsBadFilename(filename) {
-		http.Error(w, "You received this message due to that you have uploaded suspicious file."+
-			"If you have further questions, please contact the admininstrator of this server (yyx).",
+		http.Error(w, "You received this message due to that you have uploaded suspicious file. "+
+			"If you have further questions, please contact the admininstrator of this server (yyx). "+
+			"Sorry for the inconvenience caused.",
 			http.StatusBadRequest)
 		log.Println("Bad file received:", filename)
 		return
