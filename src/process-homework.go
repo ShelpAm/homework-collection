@@ -42,6 +42,10 @@ func Respond(w http.ResponseWriter, r Response) {
 }
 
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	if r.Method != "POST" {
 		http.Error(w, "Invalid request method", http.StatusBadRequest)
 		return
@@ -58,9 +62,6 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	filepath := filepath.Join("homeworks", filename)
 
 	if IsBadFilename(filename) {
-		w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		http.Error(w, "You received this message due to that you have uploaded suspicious file."+
 			"If you have further questions, please contact the admininstrator of this server (yyx).",
 			http.StatusBadRequest)
