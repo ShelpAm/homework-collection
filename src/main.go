@@ -59,6 +59,14 @@ func RateLimit(next http.Handler) http.Handler {
 	})
 }
 
+func RedirectToHome(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/home", http.StatusFound)
+}
+
+func ShowHome(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "www/html/index.html")
+}
+
 var testMode bool
 
 func main() {
@@ -70,8 +78,10 @@ func main() {
 
 	os.Mkdir("homeworks", 0755)
 
+	http.Handle("/", http.HandlerFunc(RedirectToHome))
 	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(ProcessHomework)))
 	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(ExportToZip)))
+	http.Handle("/home", http.HandlerFunc(ShowHome))
 	http.Handle("/home/list-files", http.HandlerFunc(ListFiles))
 
 	log.Println("Server is listening on port 8080")

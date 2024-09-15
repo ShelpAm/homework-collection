@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -27,6 +28,17 @@ func IsBadFilename(filename string) bool {
 	}
 
 	return false
+}
+
+type Response struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+func Respond(w http.ResponseWriter, r Response) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK) // HTTP 200 OK
+	json.NewEncoder(w).Encode(r)
 }
 
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
