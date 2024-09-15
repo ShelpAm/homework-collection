@@ -83,13 +83,42 @@
 <body>
   <div class="container">
     <h1>提交作业</h1>
-    <form action="api/process-homework" method="post" enctype="multipart/form-data">
+    <form id="homework-form">
       <label for="file">选择文件:</label>
       <input type="file" id="file" name="homework" accept=".rar,.zip" required>
       <br>
       <input type="submit" value="提交">
     </form>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    document.getElementById('homework-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const formData = new FormData();
+      const fileInput = document.getElementById('file');
+
+      if (fileInput.files.length > 0) {
+        formData.append('homework', fileInput.files[0]);
+
+        axios.post('http://154.7.177.38/api/process-homework', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+          .then(response => {
+            console.log(response.data); // 打印后端返回的数据
+            alert(response.data);
+          })
+          .catch(error => {
+            console.error('提交失败:', error); // 打印错误信息到控制台
+            alert(error.response.data);
+          });
+      } else {
+        alert('请先选择一个文件');
+      }
+    });
+  </script>
 </body>
 
 </html>
