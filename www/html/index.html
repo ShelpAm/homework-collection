@@ -124,6 +124,7 @@
         formData.append('homework', fileInput.files[0]);
         formData.append('username', usernameInput.value);
         formData.append('schoolId', schoolIdInput.value);
+        formData.append('assignmentName', "第三周")
 
         axios.post('api/process-homework', formData, {
           headers: {

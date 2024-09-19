@@ -36,7 +36,7 @@ func LoadStudents(accounts *map[Student]struct{}) error {
 
 func LoadAssignments(assignments *map[string]Assignment) error {
 	(*assignments)["第二周"] = Assignment{"第二周", time.Now(), time.Now().Add(time.Hour * 24 * 7)}
-	(*assignments)["第四周"] = Assignment{"第四周", time.Now(), time.Now().Add(time.Hour * 24 * 7)}
+	(*assignments)["第三周"] = Assignment{"第三周", time.Now(), time.Now().Add(time.Hour * 24 * 7)}
 
 	return nil
 }

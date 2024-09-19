@@ -52,7 +52,13 @@ func (a *Assignment) Receive(s Student, f multipart.File, filename string) error
 		return errors.New("Time out of bound")
 	}
 
-	savePath := filepath.Join(a.Path(), s.SchoolId+s.Name, filename)
+	baseDir := filepath.Join(a.Path(), s.SchoolId+s.Name)
+	err := os.MkdirAll(baseDir, 0755)
+	if err != nil {
+		return err
+	}
+
+	savePath := filepath.Join(baseDir, filename)
 	file, err := os.Create(savePath)
 	if err != nil {
 		return err

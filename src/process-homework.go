@@ -63,7 +63,6 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	filename := header.Filename
-	filepath := filepath.Join("homeworks", filename)
 
 	if IsBadFilename(filename) {
 		http.Error(w, "You received this message due to that you have uploaded suspicious file. "+
@@ -80,7 +79,7 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.Submit(&assignment, file, filepath)
+	err = s.Submit(&assignment, file, filename)
 	if err != nil {
 		http.Error(w, "Failed to submit file: `"+err.Error()+"`, please contact server admin (yyx).", http.StatusInternalServerError)
 		return
