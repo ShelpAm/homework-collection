@@ -125,7 +125,7 @@
         formData.append('username', usernameInput.value);
         formData.append('schoolId', schoolIdInput.value);
 
-        axios.post('http://154.7.177.38/api/process-homework', formData, {
+        axios.post('api/process-homework', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
