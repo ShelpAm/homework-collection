@@ -35,23 +35,31 @@
       font-weight: 600;
     }
 
-    label {
-      display: block;
-      margin-bottom: 16px;
-      font-size: 18px;
-      color: #6c757d;
-      font-weight: 500;
+    .form-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
     }
 
+    label {
+      font-size: 15px;
+      color: #6c757d;
+      font-weight: 500;
+      margin-right: 0px;
+      /* 添加右边距 */
+      flex: 0.4;
+      /* 使标签占据一定空间 */
+    }
+
+    input[type="text"],
     input[type="file"] {
-      display: block;
-      width: 100%;
       padding: 14px;
-      margin-bottom: 24px;
       font-size: 16px;
       border: 1px solid #ced4da;
       border-radius: 8px;
-      box-sizing: border-box;
+      flex: 2;
+      /* 使输入框占据更多空间 */
     }
 
     input[type="submit"] {
@@ -84,9 +92,21 @@
   <div class="container">
     <h1>提交作业</h1>
     <form id="homework-form">
-      <label for="file">选择文件:</label>
-      <input type="file" id="file" name="homework" accept=".rar,.zip" required>
-      <br>
+      <div class="form-group">
+        <label for="username">姓名:</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="schoolId">学号:</label>
+        <input type="text" id="schoolId" name="schoolId" required>
+      </div>
+
+      <div class="form-group">
+        <label for="file">选择文件:</label>
+        <input type="file" id="file" name="homework" accept=".rar,.zip" required>
+      </div>
+
       <input type="submit" value="提交">
     </form>
   </div>
@@ -97,9 +117,13 @@
 
       const formData = new FormData();
       const fileInput = document.getElementById('file');
+      const usernameInput = document.getElementById('username');
+      const schoolIdInput = document.getElementById('schoolId');
 
       if (fileInput.files.length > 0) {
         formData.append('homework', fileInput.files[0]);
+        formData.append('username', usernameInput.value);
+        formData.append('schoolId', schoolIdInput.value);
 
         axios.post('http://154.7.177.38/api/process-homework', formData, {
           headers: {
@@ -107,11 +131,11 @@
           }
         })
           .then(response => {
-            console.log(response.data); // 打印后端返回的数据
+            console.log(response.data);
             alert(response.data);
           })
           .catch(error => {
-            console.error('提交失败:', error); // 打印错误信息到控制台
+            console.error('提交失败:', error);
             alert(error.response.data);
           });
       } else {
