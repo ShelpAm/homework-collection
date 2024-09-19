@@ -63,11 +63,17 @@ func RedirectToHome(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/home", http.StatusFound)
 }
 
+func ShowLogin(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "www/http/auth/login.html")
+}
+
 func ShowHome(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "www/html/index.html")
 }
 
 var testMode bool
+var accounts = make(map[Student]struct{})
+var assignments = make(map[string]Assignment)
 
 func main() {
 	testMode = len(os.Args) == 2 && os.Args[1] == "--test"
@@ -76,11 +82,15 @@ func main() {
 		log.Println("RUN in TEST MODE")
 	}
 
+	LoadStudents(&accounts)
+	LoadAssignments(&assignments)
+
 	os.Mkdir("homeworks", 0755)
 
 	http.Handle("/", http.HandlerFunc(RedirectToHome))
 	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(ProcessHomework)))
 	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(ExportToZip)))
+	http.Handle("/auth/login", RateLimit(http.HandlerFunc(ShowLogin)))
 	http.Handle("/home", http.HandlerFunc(ShowHome))
 	http.Handle("/home/list-files", http.HandlerFunc(ListFiles))
 

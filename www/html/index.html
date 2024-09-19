@@ -139,6 +139,8 @@
             alert(error.response.data);
           });
       } else {
+        // Unreachable because the file input is marked 'required' and the file
+        // won't be empty.
         alert('请先选择一个文件');
       }
     });
