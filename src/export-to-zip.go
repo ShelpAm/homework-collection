@@ -32,9 +32,7 @@ func MakeZip(out string, dir string) error {
 			}
 			defer file.Close()
 
-			filename := filepath.Base(path)
-
-			writer, err := zipWriter.Create(filename)
+			writer, err := zipWriter.Create(path)
 			if err != nil {
 				return err
 			}

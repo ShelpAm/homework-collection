@@ -107,10 +107,10 @@ func main() {
 	http.Handle("POST /api/process-homework/", RateLimit(http.HandlerFunc(ProcessHomework)))
 	http.Handle("/api/export-to-zip/", RateLimit(http.HandlerFunc(ExportToZip)))
 	http.Handle("POST /auth/login/", RateLimit(http.HandlerFunc(ShowLogin)))
+	http.Handle("/home/", http.HandlerFunc(ShowHome))
 	http.Handle("/home/homeworks/", http.HandlerFunc(ListFiles))
 	http.Handle("/home/list-files/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/home/homeworks", http.StatusFound) }))
-	http.Handle("/home/", http.HandlerFunc(ShowHome))
-	// http.Handle("/home/homeworks", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
+	// http.Handle("/home/homeworks/", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
 
 	log.Println("Server is listening on port 8080")
 	http.ListenAndServe(":8080", nil)
