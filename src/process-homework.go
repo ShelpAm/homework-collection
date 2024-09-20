@@ -33,7 +33,7 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	if r.Method != "POST" {
-		http.Error(w, "Invalid request method", http.StatusBadRequest)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -64,14 +64,15 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 
 	filename := header.Filename
 
-	if IsBadFilename(filename) {
-		http.Error(w, "You received this message due to that you have uploaded suspicious file. "+
-			"If you have further questions, please contact the admininstrator of this server (yyx). "+
-			"Sorry for the inconvenience caused.",
-			http.StatusBadRequest)
-		log.Println("Bad file received:", filename)
-		return
-	}
+	// We don't need to check if is bad file now, since we used permission system.
+	// if IsBadFilename(filename) {
+	// 	http.Error(w, "You received this message due to that you have uploaded suspicious file. "+
+	// 		"If you have further questions, please contact the admininstrator of this server (yyx). "+
+	// 		"Sorry for the inconvenience caused.",
+	// 		http.StatusBadRequest)
+	// 	log.Println("Bad file received:", filename)
+	// 	return
+	// }
 
 	if testMode {
 		fmt.Fprintln(w, "In test mode, nothing actually uploaded.")
@@ -86,5 +87,5 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Homework submitted successfully")
-	log.Println("Received file", filename)
+	log.Println("Received file", filename, "from", s.SchoolId, s.Name)
 }

@@ -126,7 +126,7 @@
         formData.append('schoolId', schoolIdInput.value);
         formData.append('assignmentName', "第三周")
 
-        axios.post('api/process-homework', formData, {
+        axios.post('../api/process-homework/', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }

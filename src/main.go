@@ -60,11 +60,14 @@ func RateLimit(next http.Handler) http.Handler {
 }
 
 func RedirectToHome(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
-		http.Redirect(w, r, "/home", http.StatusFound)
-	} else {
-		http.NotFound(w, r) // or let other handlers take care of it
+	// Only redict when in /
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
 	}
+
+	http.Redirect(w, r, "/home/", http.StatusFound)
+
 }
 
 func ShowLogin(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +75,11 @@ func ShowLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowHome(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/home/" {
+		http.NotFound(w, r)
+		return
+	}
+
 	http.ServeFile(w, r, "www/html/index.html")
 }
 
@@ -95,14 +103,14 @@ func main() {
 
 	os.Mkdir("homeworks", 0755)
 
-	http.Handle("/api/process-homework", RateLimit(http.HandlerFunc(ProcessHomework)))
-	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(ExportToZip)))
-	http.Handle("/auth/login", RateLimit(http.HandlerFunc(ShowLogin)))
-	http.Handle("/home", http.HandlerFunc(ShowHome))
-	http.Handle("/home/list-files", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/home/homeworks", http.StatusFound) }))
-	http.Handle("/home/homeworks", http.HandlerFunc(ListFiles))
+	http.Handle("/", http.HandlerFunc(RedirectToHome))
+	http.Handle("POST /api/process-homework/", RateLimit(http.HandlerFunc(ProcessHomework)))
+	http.Handle("/api/export-to-zip/", RateLimit(http.HandlerFunc(ExportToZip)))
+	http.Handle("POST /auth/login/", RateLimit(http.HandlerFunc(ShowLogin)))
+	http.Handle("/home/homeworks/", http.HandlerFunc(ListFiles))
+	http.Handle("/home/list-files/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/home/homeworks", http.StatusFound) }))
+	http.Handle("/home/", http.HandlerFunc(ShowHome))
 	// http.Handle("/home/homeworks", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
-	http.Handle("/", http.HandlerFunc(RedirectToHome)) // Move to last line to lastly match this.
 
 	log.Println("Server is listening on port 8080")
 	http.ListenAndServe(":8080", nil)
