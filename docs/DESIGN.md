@@ -13,7 +13,7 @@ This documentation basically describes the architecture of the application.
 - **Admininstrator**: has full access to the system.
 - **Course**: container for teachers, students and assignments.
 - **Assignment**: attached to courses. There may be multiple assignments in a
-    course.
+  course. But there cannot be more than one uploaded file for each person.
 
 ## Key Points
 
