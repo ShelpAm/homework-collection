@@ -49,11 +49,15 @@ func (a *Assignment) Path() string {
 
 func (a *Assignment) Receive(s Student, f multipart.File, filename string) error {
 	if now := time.Now(); now.Before(a.BeginTime) || now.After(a.EndTime) {
-		return errors.New("Time out of bound")
+		return errors.New("Submission time out of bound (作业提交超出时限)")
 	}
 
 	baseDir := filepath.Join(a.Path(), s.SchoolId+s.Name)
-	err := os.MkdirAll(baseDir, 0755)
+	err := os.Remove(baseDir) // Overrides origin file/dir.
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(baseDir, 0755)
 	if err != nil {
 		return err
 	}
