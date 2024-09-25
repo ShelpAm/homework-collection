@@ -53,7 +53,7 @@ func (a *Assignment) Receive(s Student, f multipart.File, filename string) error
 	}
 
 	baseDir := filepath.Join(a.Path(), s.SchoolId+s.Name)
-	err := os.Remove(baseDir) // Overrides origin file/dir.
+	err := os.RemoveAll(baseDir) // Overrides origin file/dir.
 	if err != nil {
 		return err
 	}
