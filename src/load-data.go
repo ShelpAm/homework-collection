@@ -40,5 +40,7 @@ func LoadAssignments(assignments *map[string]Assignment) error {
 	(*assignments)["第三周"] = Assignment{"第三周", time.Now(), time.Now().Add(time.Hour * 24 * 7)}
 	(*assignments)["第四周"] = Assignment{"第四周", time.Now(), time.Now().Add(time.Hour * 24 * 7)}
 
+	(*assignments)["五个一"] = Assignment{"五个一", time.Now(), time.Now().Add(time.Hour * 24 * 31 * 2)}
+
 	return nil
 }
