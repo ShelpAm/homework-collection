@@ -88,5 +88,5 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Homework submitted successfully")
-	log.Println("Assignment ", assignmentName, "received file", filename, "from", s.SchoolId, s.Name)
+	log.Println("Assignment", assignmentName, "received file", filename, "from", s.SchoolId, s.Name)
 }

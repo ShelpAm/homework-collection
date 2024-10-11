@@ -13,7 +13,7 @@ type FileData struct {
 }
 
 func ListFiles(w http.ResponseWriter, _ *http.Request) {
-	dir := "./homeworks/第四周" // Change this to the directory you want to list
+	dir := "./homeworks/第四周" // Change this for listed directory
 
 	// Read directory contents
 	files, err := os.ReadDir(dir)
