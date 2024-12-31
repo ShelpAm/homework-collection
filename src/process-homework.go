@@ -1,13 +1,27 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"path/filepath"
 	"slices"
 	"strings"
 )
+
+type SizeableReader struct {
+	Reader io.Reader
+	Size   int64
+}
+
+func (r *SizeableReader) Read(p []byte) (int, error) {
+	return r.Reader.Read(p)
+}
+
+func (r *SizeableReader) Close() {
+	r.Close()
+}
 
 func IsBadFilename(filename string) bool {
 	if strings.ContainsAny(filename, "/\\") {
@@ -27,10 +41,15 @@ func IsBadFilename(filename string) bool {
 	return false
 }
 
+type ProcessHomeworkResult struct {
+	TaskId TaskId
+}
+
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
 	// Since router only pass POST to here, we don't need to test POST method.
 	// if r.Method != "POST" {
@@ -61,9 +80,10 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get file", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
+	// defer file.Close() // We pass the ownwership to `s.Submit`
 
 	filename := header.Filename
+	fileSize := header.Size
 
 	// We don't need to check if is bad file now, since we used permission system.
 	// if IsBadFilename(filename) {
@@ -76,18 +96,19 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	if testMode {
-		fmt.Fprintln(w, "In test mode, nothing actually uploaded.")
-		log.Println("TEST MODE, received file")
+		http.Error(w, "In test mode, nothing actually uploaded.", http.StatusOK)
+		log.Println("In TEST mode, received file")
 		return
 	}
 
-	fmt.Fprintf(w, "Uploading your homework, please wait.")
-	err = s.Submit(&assignment, file, filename)
+	// Since this is basically schedules the execution of copying file, the file
+	// will be closed after the function exits. So we need transfer the ownwership
+	// of the file to `s.Submit`.
+	taskId, err := s.Submit(&assignment, &SizeableReader{Reader: file, Size: fileSize}, filename)
 	if err != nil {
 		http.Error(w, "Failed to submit file: `"+err.Error()+"`, please contact server admin (yyx).", http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintf(w, "Homework submitted successfully")
-	log.Println("Assignment", assignmentName, "received file", filename, "from", s.SchoolId, s.Name)
+	json.NewEncoder(w).Encode(taskId)
 }

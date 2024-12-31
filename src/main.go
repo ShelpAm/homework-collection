@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -45,7 +46,7 @@ func RateLimit(next http.Handler) http.Handler {
 		}()
 
 		// Check if the IP exceeds the limit (e.g., 60 requests per minute)
-		if requestCounts[ip] > 10 {
+		if requestCounts[ip] > 120 {
 			mutex.Unlock()
 			http.Error(w, "Too many requests, please try again later.", http.StatusTooManyRequests)
 			log.Println("IP banned due to excessive requests:", ip)
@@ -87,12 +88,29 @@ func ShowHomeworks(w http.ResponseWriter, r *http.Request) {
 	// TODO: implement this
 }
 
+func GetProgress(w http.ResponseWriter, r *http.Request) {
+	taskId := r.FormValue("taskId")
+
+	progress, err := fileUploader.GetProgress(taskId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(progress)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+}
+
 var testMode bool
 var accounts = make(map[Student]struct{})
 var assignments = make(map[string]Assignment)
+var fileUploader = MakeFileUploader()
 
 func main() {
-
 	log.Println("Homework-collection system running...")
 	testMode = len(os.Args) == 2 && os.Args[1] == "--test"
 
@@ -109,6 +127,7 @@ func main() {
 
 	http.Handle("/", http.HandlerFunc(RedirectToHome))
 	http.Handle("POST /api/process-homework/", RateLimit(http.HandlerFunc(ProcessHomework)))
+	http.Handle("POST /api/progress/", RateLimit(http.HandlerFunc(GetProgress)))
 	http.Handle("/api/export-to-zip/", RateLimit(http.HandlerFunc(ExportToZip)))
 	http.Handle("POST /auth/login/", RateLimit(http.HandlerFunc(ShowLogin)))
 	http.Handle("/home/", http.HandlerFunc(ShowHome))

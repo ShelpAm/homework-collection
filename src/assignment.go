@@ -3,8 +3,7 @@ package main
 import (
 	"crypto/sha512"
 	"errors"
-	"io"
-	"mime/multipart"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -28,13 +27,13 @@ type Student struct {
 	SchoolId string
 }
 
-func (s *Student) Submit(a *Assignment, f multipart.File, filename string) error {
-	err := a.Receive(*s, f, filename)
+func (s *Student) Submit(a *Assignment, r *SizeableReader, filename string) (TaskId, error) {
+	taskId, err := a.Receive(*s, r, filename)
 	if err != nil {
-		return err
+		return taskId, err
 	}
 
-	return nil
+	return taskId, nil
 }
 
 type Assignment struct {
@@ -47,32 +46,45 @@ func (a *Assignment) Path() string {
 	return filepath.Join("homeworks", a.Name)
 }
 
-func (a *Assignment) Receive(s Student, f multipart.File, filename string) error {
+func (a *Assignment) Receive(s Student, r *SizeableReader, filename string) (TaskId, error) {
 	if now := time.Now(); now.Before(a.BeginTime) || now.After(a.EndTime) {
-		return errors.New("Submission time out of bound (作业提交超出时限)")
+		return TaskId{}, errors.New("Submission time out of bound (作业提交超出时限)")
 	}
 
 	baseDir := filepath.Join(a.Path(), s.SchoolId+s.Name)
 	err := os.RemoveAll(baseDir) // Overrides origin file/dir.
 	if err != nil {
-		return err
+		return TaskId{}, err
 	}
 	err = os.MkdirAll(baseDir, 0755)
 	if err != nil {
-		return err
+		return TaskId{}, err
 	}
 
 	savePath := filepath.Join(baseDir, filename)
-	file, err := os.Create(savePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
 
-	_, err = io.Copy(file, f)
-	if err != nil {
-		return errors.New("Cannot copy file")
-	}
+	id := fileUploader.ScheduleUploadTo(*r, savePath, func() {
+		defer r.Close()
+		log.Println("Assignment", a.Name, "received file", filename, "from", s.SchoolId, s.Name)
+	})
+	return id, nil
+	// err = writeToFileWithProgress(f, savePath, func(progress float64) {
+	// fmt.Println("Progress: ", progress)
+	// })
+	// if err != nil {
+	// 	return errors.New("Cannot copy file")
+	// }
 
-	return nil
+	// file, err := os.Create(savePath)
+	// if err != nil {
+	// 	return err
+	// }
+	// defer file.Close()
+	//
+	// _, err = io.Copy(file, f)
+	// if err != nil {
+	// 	return errors.New("Cannot copy file")
+	// }
+
+	// return nil
 }
