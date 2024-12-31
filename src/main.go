@@ -92,13 +92,17 @@ var accounts = make(map[Student]struct{})
 var assignments = make(map[string]Assignment)
 
 func main() {
+
+	log.Println("Homework-collection system running...")
 	testMode = len(os.Args) == 2 && os.Args[1] == "--test"
 
 	if testMode {
 		log.Println("RUN in TEST MODE")
 	}
 
+	log.Println("Loading students.")
 	LoadStudents(&accounts)
+	log.Println("Loading assignments.")
 	LoadAssignments(&assignments)
 
 	os.Mkdir("homeworks", 0755)
