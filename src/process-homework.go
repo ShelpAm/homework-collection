@@ -81,6 +81,7 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Fprintf(w, "Uploading your homework, please wait.")
 	err = s.Submit(&assignment, file, filename)
 	if err != nil {
 		http.Error(w, "Failed to submit file: `"+err.Error()+"`, please contact server admin (yyx).", http.StatusInternalServerError)
