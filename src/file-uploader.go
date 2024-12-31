@@ -42,15 +42,19 @@ func (fu *FileUploader) ScheduleUploadTo(sr SizeableReader, dest string, onFinis
 	taskId := makeTaskId()
 
 	go func() {
+		log.Println("Before")
 		err := writeToFileWithProgress(sr, dest, func(progress Progress) {
 			fu.fileProgresses[taskId] = progress
 		})
+		log.Println("After")
 
 		if err != nil {
 			delete(fu.fileProgresses, taskId) // Removes task from the map.
 			log.Println("Error: " + err.Error())
 		}
 	}()
+
+	log.Println("Out")
 
 	return taskId
 }
