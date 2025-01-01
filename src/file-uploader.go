@@ -38,20 +38,24 @@ func makeTaskId() TaskId {
 	return TaskId(uuid.New())
 }
 
+// onFinish will be called iff the write process succeeded.
 func (fu *FileUploader) ScheduleUploadTo(sr SizeableReader, dest string, onFinish func()) TaskId {
 	taskId := makeTaskId()
 
 	go func() {
 		log.Println("Before")
-		err := writeToFileWithProgress(sr, dest, func(progress Progress) {
-			fu.fileProgresses[taskId] = progress
+		err := writeToFileWithProgress(sr, dest, func(p Progress) {
+			fu.fileProgresses[taskId] = p
 		})
 		log.Println("After")
 
 		if err != nil {
 			delete(fu.fileProgresses, taskId) // Removes task from the map.
 			log.Println("Error: " + err.Error())
+			return
 		}
+
+		onFinish()
 	}()
 
 	log.Println("Out")

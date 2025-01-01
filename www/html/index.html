@@ -110,7 +110,7 @@
             <input type="submit" value="提交">
         </form>
     </div>
-    <div><button onclick="queryProgress()">123</button></div>
+    <!-- <div><button onclick="queryProgress()">123</button></div> -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         async function queryProgress(taskId) {
@@ -142,10 +142,6 @@
                 formData.append('schoolId', schoolIdInput.value);
                 formData.append('assignmentName', '五个一')
 
-                setTimeout(() => {
-                    alert('Uploading your homework, please wait.')
-                }, 0);
-
                 // try {
                 //
                 // }
@@ -157,6 +153,11 @@
                     .then((response) => {
                         console.log(response.data);
                         const taskId = response.data;
+
+
+                        setTimeout(() => {
+                            alert('Uploading your homework, please wait. (ID:' + taskId + ')')
+                        }, 0);
 
                         let progress = 0
                         const id = setInterval(async () => {
@@ -175,7 +176,7 @@
                     })
                     .catch(error => {
                         console.error('提交失败:', error);
-                        alert(error.response.data);
+                        alert('Failed to submit your homework: ' + error.response.data);
                     });
             } else {
                 // Unreachable because the file input is marked 'required' and the file

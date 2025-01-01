@@ -27,8 +27,8 @@ type Student struct {
 	SchoolId string
 }
 
-func (s *Student) Submit(a *Assignment, r *SizeableReader, filename string) (TaskId, error) {
-	taskId, err := a.Receive(*s, r, filename)
+func (s *Student) Submit(a *Assignment, r SizeableReader, filename string, onFinish func()) (TaskId, error) {
+	taskId, err := a.Receive(*s, r, filename, onFinish)
 	if err != nil {
 		return taskId, err
 	}
@@ -46,7 +46,7 @@ func (a *Assignment) Path() string {
 	return filepath.Join("homeworks", a.Name)
 }
 
-func (a *Assignment) Receive(s Student, r *SizeableReader, filename string) (TaskId, error) {
+func (a *Assignment) Receive(s Student, r SizeableReader, filename string, onFinish func()) (TaskId, error) {
 	if now := time.Now(); now.Before(a.BeginTime) || now.After(a.EndTime) {
 		return TaskId{}, errors.New("Submission time out of bound (作业提交超出时限)")
 	}
@@ -63,10 +63,8 @@ func (a *Assignment) Receive(s Student, r *SizeableReader, filename string) (Tas
 
 	savePath := filepath.Join(baseDir, filename)
 
-	id := fileUploader.ScheduleUploadTo(*r, savePath, func() {
-		defer r.Close()
-		log.Println("Assignment", a.Name, "received file", filename, "from", s.SchoolId, s.Name)
-	})
+	id := fileUploader.ScheduleUploadTo(r, savePath, onFinish)
+	log.Println("Scheduled")
 	return id, nil
 	// err = writeToFileWithProgress(f, savePath, func(progress float64) {
 	// fmt.Println("Progress: ", progress)

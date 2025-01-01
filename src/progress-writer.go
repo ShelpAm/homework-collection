@@ -10,16 +10,16 @@ type OnProgressUpdate func(progress float64)
 type ProgressWriter struct {
 	Writer   io.Writer
 	Total    int64
-	Copied   int64
+	Written  int64
 	OnUpdate OnProgressUpdate
 }
 
 func (pw *ProgressWriter) Write(p []byte) (n int, err error) {
 	n, err = pw.Writer.Write(p)
-	pw.Copied += int64(n)
+	pw.Written += int64(n)
 
 	if pw != nil {
-		progress := float64(pw.Copied) / float64(pw.Total)
+		progress := float64(pw.Written) / float64(pw.Total)
 		pw.OnUpdate(progress)
 	}
 

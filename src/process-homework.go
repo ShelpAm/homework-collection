@@ -15,12 +15,8 @@ type SizeableReader struct {
 	Size   int64
 }
 
-func (r *SizeableReader) Read(p []byte) (int, error) {
+func (r SizeableReader) Read(p []byte) (int, error) {
 	return r.Reader.Read(p)
-}
-
-func (r *SizeableReader) Close() {
-	r.Close()
 }
 
 func IsBadFilename(filename string) bool {
@@ -46,6 +42,7 @@ type ProcessHomeworkResult struct {
 }
 
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
+	log.Println("Request received.")
 	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -62,8 +59,8 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	schoolId := r.FormValue("schoolId")
 	assignmentName := r.FormValue("assignmentName")
 
-	s := Student{username, schoolId}
-	if _, exists := accounts[s]; !exists {
+	student := Student{username, schoolId}
+	if _, exists := accounts[student]; !exists {
 		http.Error(w, "Student doesn't exist", http.StatusBadRequest)
 		return
 	}
@@ -104,7 +101,11 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	// Since this is basically schedules the execution of copying file, the file
 	// will be closed after the function exits. So we need transfer the ownwership
 	// of the file to `s.Submit`.
-	taskId, err := s.Submit(&assignment, &SizeableReader{Reader: file, Size: fileSize}, filename)
+	log.Println("Receiving assignment", assignment.Name, filename, "from", student.SchoolId, student.Name)
+	taskId, err := student.Submit(&assignment, SizeableReader{Reader: file, Size: fileSize}, filename, func() {
+		defer file.Close()
+		log.Println("Assignment", assignment.Name, "received file", filename, "from", student.SchoolId, student.Name)
+	})
 	if err != nil {
 		http.Error(w, "Failed to submit file: `"+err.Error()+"`, please contact server admin (yyx).", http.StatusInternalServerError)
 		return
