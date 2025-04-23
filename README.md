@@ -5,7 +5,7 @@
 1.   Install [Golang](https://go.dev/)
 2.   `git clone https://github.com/ShelpAm/homework-collection`
 3.   `cd homework-collection`
-4.   `go get .`
+4.   `go get .` # This seems not to work. But you can skip this step safely.
 5.   `go run src/*.go`
 
 ## Nginx
@@ -15,14 +15,15 @@ The server by default listens on port 8080. If you want it to listen on port 80 
 Here is the way to use it.
 
 1.  Add the following to the http section of `/etc/nginx/nginx.conf`. It configures the nginx to do reverse proxy to port 8080.
+    Note that you should edit some placeholder to fit your requirements.
     ```nginx.conf
             server {
                     listen 80;
                     listen [::]:80;
-                    server_name  homework_collection;
-    
-                    client_max_body_size 20M;
-    
+                    server_name  yoursite.com; # Edit here
+
+                    client_max_body_size 256M;
+
                     location / {
                       proxy_pass http://127.0.0.1:8080;
                       proxy_set_header Host $host;
@@ -31,4 +32,5 @@ Here is the way to use it.
                     }
             }
     ```
-2.  Remove the line (or comment out) in `/etc/nginx/nginx.conf`: `include /etc/nginx/sites-enabled/*;`
+<!-- 2.  Remove the line (or comment out) in `/etc/nginx/nginx.conf`: `include /etc/nginx/sites-enabled/*;` -->
+2.  Remove `default` in `/etc/nginx/sites-enabled/*`.
