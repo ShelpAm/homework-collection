@@ -52,4 +52,6 @@ To uninstall the service, run:
 make uninstall
 ```
 
+And now you can enable and start it by `systemctl --user enable homework-collection.service --now`.
+
 The installation is default to user home, following [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec).
