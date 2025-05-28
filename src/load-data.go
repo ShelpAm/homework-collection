@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/xuri/excelize/v2"
 )
 
 func LoadStudents(accounts *map[Student]struct{}) error {
-	f, err := excelize.OpenFile("students.xlsx")
+	f, err := excelize.OpenFile(filepath.Join(dataDir, "students.xlsx"))
 	if err != nil {
 		return err
 	}

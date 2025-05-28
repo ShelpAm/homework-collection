@@ -51,7 +51,7 @@ func (a *Assignment) Receive(s Student, r SizeableReader, filename string, onFin
 		return TaskId{}, errors.New("Submission time out of bound (作业提交超出时限)")
 	}
 
-	baseDir := filepath.Join(a.Path(), s.SchoolId+s.Name)
+	baseDir := filepath.Join(dataDir, a.Path(), s.SchoolId+s.Name)
 	err := os.RemoveAll(baseDir) // Overrides origin file/dir.
 	if err != nil {
 		return TaskId{}, err

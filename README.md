@@ -34,3 +34,22 @@ Here is the way to use it.
     ```
 <!-- 2.  Remove the line (or comment out) in `/etc/nginx/nginx.conf`: `include /etc/nginx/sites-enabled/*;` -->
 2.  Remove `default` in `/etc/nginx/sites-enabled/*`.
+
+## Install as systemd.service
+
+You should first build the project:
+```bash
+make build
+```
+
+To install the project as systemd.service, run:
+```bash
+make install
+```
+
+To uninstall the service, run:
+```bash
+make uninstall
+```
+
+The installation is default to user home, following [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec).

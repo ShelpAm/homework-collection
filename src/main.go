@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +27,17 @@ func GetClientIP(r *http.Request) string {
 
 var requestCounts = make(map[string]int)
 var mutex = &sync.Mutex{}
+var dataDir = func() string {
+	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
+		return filepath.Join(dir, "homework-collection")
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		// As a last resort, just use the current directory
+		return "."
+	}
+	return filepath.Join(home, ".local", "share", "homework-collection")
+}()
 
 // Rate limiter middleware
 func RateLimit(next http.Handler) http.Handler {
@@ -68,11 +80,10 @@ func RedirectToHome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/home/", http.StatusFound)
-
 }
 
 func ShowLogin(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "www/http/auth/login.html")
+	http.ServeFile(w, r, dataDir+"/www/http/auth/login.html")
 }
 
 func ShowHome(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +92,7 @@ func ShowHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.ServeFile(w, r, "www/html/index.html")
+	http.ServeFile(w, r, filepath.Join(dataDir, "www", "html", "index.html"))
 }
 
 func ShowHomeworks(w http.ResponseWriter, r *http.Request) {
@@ -119,11 +130,17 @@ func main() {
 	}
 
 	log.Println("Loading students.")
-	LoadStudents(&accounts)
+	err := LoadStudents(&accounts)
+	if err != nil {
+		log.Println(err.Error())
+	}
 	log.Println("Loading assignments.")
-	LoadAssignments(&assignments)
+	err = LoadAssignments(&assignments)
+	if err != nil {
+		log.Println(err.Error())
+	}
 
-	os.Mkdir("homeworks", 0755)
+	os.Mkdir(filepath.Join(dataDir, "homeworks"), 0755)
 
 	http.Handle("/", http.HandlerFunc(RedirectToHome))
 	http.Handle("POST /api/process-homework/", RateLimit(http.HandlerFunc(ProcessHomework)))
@@ -136,5 +153,6 @@ func main() {
 	// http.Handle("/home/homeworks/", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
 
 	log.Println("Server is listening on port 8080")
-	http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
+	log.Println(err.Error())
 }

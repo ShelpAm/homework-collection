@@ -1,0 +1,10 @@
+[Unit]
+Description=Homework Collection Service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/homework-collection
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
