@@ -36,4 +36,4 @@ uninstall:
 	rm $(SYSTEMD_DIR)/homework-collection.service
 
 clean:
-	rm -r $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
