@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -22,13 +23,29 @@ func (u *User) Login(password string) error {
 	return nil
 }
 
-type Student struct {
+type Account struct {
 	Name     string
 	SchoolId string
 }
 
-func (s *Student) Submit(a *Assignment, r SizeableReader, filename string, onFinish func()) (TaskId, error) {
-	taskId, err := a.Receive(*s, r, filename, onFinish)
+type Student struct {
+	Account      Account
+	OnSubmitting sync.Mutex
+}
+
+func (s *Student) Submit(a *Assignment, r SizeableReader, filename string, onFinish func(TaskId)) (TaskId, error) {
+	// Uploading policy for the same user:
+	// 1. Queuing
+	s.OnSubmitting.Lock()
+	// 2. Aborting
+	// if !s.OnSubmitting.TryLock() {
+	// 	return TaskId{}, errors.New("This student is on submitting another homework. Please cancel that or wait for it to finish.")
+	// }
+
+	taskId, err := a.Receive(s, r, filename, func(id TaskId) {
+		s.OnSubmitting.Unlock()
+		onFinish(id)
+	})
 	if err != nil {
 		return taskId, err
 	}
@@ -46,25 +63,26 @@ func (a *Assignment) Path() string {
 	return filepath.Join("homeworks", a.Name)
 }
 
-func (a *Assignment) Receive(s Student, r SizeableReader, filename string, onFinish func()) (TaskId, error) {
+func (a *Assignment) Receive(s *Student, r SizeableReader, filename string, onFinish func(TaskId)) (TaskId, error) {
 	if now := time.Now(); now.Before(a.BeginTime) || now.After(a.EndTime) {
 		return TaskId{}, errors.New("Submission time out of bound (作业提交超出时限)")
 	}
 
-	baseDir := filepath.Join(dataDir, a.Path(), s.SchoolId+s.Name)
-	err := os.RemoveAll(baseDir) // Overrides origin file/dir.
-	if err != nil {
-		return TaskId{}, err
+	baseDir := filepath.Join(dataDir, a.Path(), s.Account.SchoolId+s.Account.Name)
+
+	// Overrides origin file/dir.
+	if err := os.RemoveAll(baseDir); err != nil {
+		log.Fatalln("Failed to remove directory " + baseDir + ": " + err.Error())
 	}
-	err = os.MkdirAll(baseDir, 0755)
-	if err != nil {
-		return TaskId{}, err
+
+	if err := os.MkdirAll(baseDir, 0755); err != nil {
+		log.Fatalln("Failed to make directory " + baseDir + ": " + err.Error())
 	}
 
 	savePath := filepath.Join(baseDir, filename)
 
 	id := fileUploader.ScheduleUploadTo(r, savePath, onFinish)
-	log.Println("Scheduled")
+	log.Println("Receiving assignment " + a.Name + " " + filename + " from " + s.Account.SchoolId + " " + s.Account.Name + ", task id: " + id.String())
 	return id, nil
 	// err = writeToFileWithProgress(f, savePath, func(progress float64) {
 	// fmt.Println("Progress: ", progress)

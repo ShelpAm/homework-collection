@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/google/uuid"
 )
@@ -12,6 +13,7 @@ type Progress = float64
 
 type FileUploader struct {
 	fileProgresses map[TaskId]Progress
+	mutex          sync.Mutex
 }
 
 func MakeFileUploader() *FileUploader {
@@ -39,26 +41,30 @@ func makeTaskId() TaskId {
 }
 
 // onFinish will be called iff the write process succeeded.
-func (fu *FileUploader) ScheduleUploadTo(sr SizeableReader, dest string, onFinish func()) TaskId {
+func (fu *FileUploader) ScheduleUploadTo(sr SizeableReader, dest string, onFinish func(TaskId)) TaskId {
 	taskId := makeTaskId()
 
 	go func() {
-		log.Println("Before")
+		// log.Println("Before")
 		err := writeToFileWithProgress(sr, dest, func(p Progress) {
+			fu.mutex.Lock()
+			defer fu.mutex.Unlock()
 			fu.fileProgresses[taskId] = p
 		})
-		log.Println("After")
+		// log.Println("After")
 
 		if err != nil {
+			fu.mutex.Lock()
+			defer fu.mutex.Unlock()
 			delete(fu.fileProgresses, taskId) // Removes task from the map.
-			log.Println("Error: " + err.Error())
+			log.Println("Cannot write to file " + dest + ": " + err.Error())
 			return
 		}
 
-		onFinish()
+		onFinish(taskId)
 	}()
 
-	log.Println("Out")
+	// log.Println("Out")
 
 	return taskId
 }

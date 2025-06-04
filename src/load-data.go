@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/xuri/excelize/v2"
 )
 
-func LoadStudents(accounts *map[Student]struct{}) error {
+func LoadStudents() error {
 	f, err := excelize.OpenFile(filepath.Join(dataDir, "students.xlsx"))
 	if err != nil {
 		return err
@@ -29,7 +30,8 @@ func LoadStudents(accounts *map[Student]struct{}) error {
 		name := row[0]
 		schoolId := row[1]
 
-		(*accounts)[Student{name, schoolId}] = struct{}{}
+		account := Account{name, schoolId}
+		students[account] = &Student{Account: account, OnSubmitting: sync.Mutex{}}
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"os"
 )
@@ -30,7 +31,7 @@ func writeToFileWithProgress(src SizeableReader, dstPath string, callback OnProg
 	// Open the destination file
 	dstFile, err := os.Create(dstPath)
 	if err != nil {
-		return err
+		return errors.New("Cannot create file " + dstPath + ": " + err.Error())
 	}
 	defer dstFile.Close()
 
@@ -44,7 +45,7 @@ func writeToFileWithProgress(src SizeableReader, dstPath string, callback OnProg
 	// Copy the file with progress tracking
 	_, err = io.Copy(pw, &src)
 	if err != nil {
-		return err
+		return errors.New("Cannot copy to file " + dstPath + ": " + err.Error())
 	}
 
 	return nil

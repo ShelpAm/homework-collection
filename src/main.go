@@ -25,19 +25,33 @@ func GetClientIP(r *http.Request) string {
 	return ip
 }
 
-var requestCounts = make(map[string]int)
-var mutex = &sync.Mutex{}
-var dataDir = func() string {
-	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
-		return filepath.Join(dir, "homework-collection")
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		// As a last resort, just use the current directory
-		return "."
-	}
-	return filepath.Join(home, ".local", "share", "homework-collection")
-}()
+var (
+	requestCounts = make(map[string]int)
+	mutex         = &sync.Mutex{}
+	dataDir       = func() string {
+		if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
+			return filepath.Join(dir, "homework-collection")
+		}
+		home, err := os.UserHomeDir()
+		if err != nil {
+			// As a last resort, just use the current directory
+			return "."
+		}
+		return filepath.Join(home, ".local", "share", "homework-collection")
+	}()
+)
+
+// 每分钟清除所有 IP 的访问计数
+func startRateLimitReset() {
+	go func() {
+		for {
+			time.Sleep(1 * time.Minute)
+			mutex.Lock()
+			requestCounts = make(map[string]int)
+			mutex.Unlock()
+		}
+	}()
+}
 
 // Rate limiter middleware
 func RateLimit(next http.Handler) http.Handler {
@@ -45,29 +59,16 @@ func RateLimit(next http.Handler) http.Handler {
 		ip := GetClientIP(r)
 
 		mutex.Lock()
-
-		// Increment request count for the IP
 		requestCounts[ip]++
+		count := requestCounts[ip]
+		mutex.Unlock()
 
-		// Set a time window to reset the counter every minute
-		go func() {
-			time.Sleep(1 * time.Minute)
-			mutex.Lock()
-			delete(requestCounts, ip) // Reset request count after 1 minute
-			mutex.Unlock()
-		}()
-
-		// Check if the IP exceeds the limit (e.g., 60 requests per minute)
-		if requestCounts[ip] > 120 {
-			mutex.Unlock()
+		if false && count > 120 { // TODO: remove `false`
 			http.Error(w, "Too many requests, please try again later.", http.StatusTooManyRequests)
-			log.Println("IP banned due to excessive requests:", ip)
+			log.Println("IP throttled:", ip)
 			return
 		}
 
-		mutex.Unlock()
-
-		// Proceed to the next handler
 		next.ServeHTTP(w, r)
 	})
 }
@@ -116,8 +117,10 @@ func GetProgress(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type Students map[Account]*Student
+
 var testMode bool
-var accounts = make(map[Student]struct{})
+var students = Students{}
 var assignments = make(map[string]Assignment)
 var fileUploader = MakeFileUploader()
 
@@ -130,7 +133,7 @@ func main() {
 	}
 
 	log.Println("Loading students.")
-	err := LoadStudents(&accounts)
+	err := LoadStudents()
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -142,6 +145,7 @@ func main() {
 
 	os.Mkdir(filepath.Join(dataDir, "homeworks"), 0755)
 
+	startRateLimitReset()
 	http.Handle("/", http.HandlerFunc(RedirectToHome))
 	http.Handle("POST /api/process-homework/", RateLimit(http.HandlerFunc(ProcessHomework)))
 	http.Handle("POST /api/progress/", RateLimit(http.HandlerFunc(GetProgress)))

@@ -42,7 +42,7 @@ type ProcessHomeworkResult struct {
 }
 
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
-	log.Println("ProcessHomework request received.")
+	// log.Println("ProcessHomework request received.")
 	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -59,8 +59,9 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	schoolId := r.FormValue("schoolId")
 	assignmentName := r.FormValue("assignmentName")
 
-	student := Student{username, schoolId}
-	if _, exists := accounts[student]; !exists {
+	account := Account{username, schoolId}
+	studentPtr, exists := students[account]
+	if !exists {
 		http.Error(w, "Student doesn't exist", http.StatusBadRequest)
 		return
 	}
@@ -77,7 +78,10 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get file", http.StatusBadRequest)
 		return
 	}
-	// defer file.Close() // We pass the ownwership to `s.Submit`
+	// defer file.Close() // We pass the ownwership to `s.Submit`. To get the
+	// reason, refer the comment following (about +20 lines).
+	// Actually, we can move the copying process on a gorouting here. (Since the
+	// copying is already on a gorouting, we can also call this move an 'advance')
 
 	filename := header.Filename
 	fileSize := header.Size
@@ -101,13 +105,13 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	// Since this is basically schedules the execution of copying file, the file
 	// will be closed after the function exits. So we need transfer the ownwership
 	// of the file to `s.Submit`.
-	log.Println("Receiving assignment", assignment.Name, filename, "from", student.SchoolId, student.Name)
-	taskId, err := student.Submit(&assignment, SizeableReader{Reader: file, Size: fileSize}, filename, func() {
-		defer file.Close()
-		log.Println("Assignment", assignment.Name, "received file", filename, "from", student.SchoolId, student.Name)
+	taskId, err := studentPtr.Submit(&assignment, SizeableReader{Reader: file, Size: fileSize}, filename, func(id TaskId) {
+		file.Close()
+		log.Println("Successfully finished task " + id.String())
 	})
 	if err != nil {
-		http.Error(w, "Failed to submit file: `"+err.Error()+"`, please contact server admin (yyx).", http.StatusInternalServerError)
+		log.Println("Failed to submit file: " + err.Error())
+		http.Error(w, "Failed to submit file: "+err.Error()+", please contact server admin (yyx).", http.StatusInternalServerError)
 		return
 	}
 
