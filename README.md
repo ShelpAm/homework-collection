@@ -54,4 +54,8 @@ make uninstall
 
 And now you can enable and start it by `systemctl --user enable homework-collection.service --now`.
 
+If you already installed `homework-collection` before, you may should refresh systemd files by
+`systmectl --user daemon-reload`. And after that you can run `systemctl --user restart
+homework-collection` to restart the service.
+
 The installation is default to user home, following [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec).
