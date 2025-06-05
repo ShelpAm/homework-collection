@@ -5,9 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"path/filepath"
-	"slices"
-	"strings"
 )
 
 type SizeableReader struct {
@@ -17,24 +14,6 @@ type SizeableReader struct {
 
 func (r SizeableReader) Read(p []byte) (int, error) {
 	return r.Reader.Read(p)
-}
-
-func IsBadFilename(filename string) bool {
-	if strings.ContainsAny(filename, "/\\") {
-		return true
-	}
-
-	ext := filepath.Ext(filename)
-	allowed := []string{".zip", ".7z", ".gz", ".rar", ".xz"}
-	if !slices.Contains(allowed, ext) {
-		return true
-	}
-
-	if !strings.Contains(filename, "-") {
-		return true
-	}
-
-	return false
 }
 
 type ProcessHomeworkResult struct {
@@ -47,12 +26,6 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
-
-	// Since router only pass POST to here, we don't need to test POST method.
-	// if r.Method != "POST" {
-	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 	return
-	// }
 
 	// Authenticates student's info.
 	username := r.FormValue("username")
