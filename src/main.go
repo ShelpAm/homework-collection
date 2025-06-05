@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -63,7 +64,7 @@ func RateLimit(next http.Handler) http.Handler {
 		count := requestCounts[ip]
 		mutex.Unlock()
 
-		if false && count > 120 { // TODO: remove `false`
+		if false && count > 120 { // TODO: remove `false`. This is only for benchmark test
 			http.Error(w, "Too many requests, please try again later.", http.StatusTooManyRequests)
 			log.Println("IP throttled:", ip)
 			return
@@ -117,6 +118,22 @@ func GetProgress(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func SetLogWriters() *os.File {
+	// Open log file
+	file, err := os.OpenFile(filepath.Join(dataDir, "app.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+
+	// Create multi-writer to both stdout and file
+	multiWriter := io.MultiWriter(os.Stdout, file)
+
+	// Set log output
+	log.SetOutput(multiWriter)
+
+	return file
+}
+
 type Students map[Account]*Student
 
 var testMode bool
@@ -125,6 +142,9 @@ var assignments = make(map[string]Assignment)
 var fileUploader = MakeFileUploader()
 
 func main() {
+	logFile := SetLogWriters()
+	defer logFile.Close()
+
 	log.Println("Homework-collection system running...")
 	testMode = len(os.Args) == 2 && os.Args[1] == "--test"
 
@@ -133,13 +153,12 @@ func main() {
 	}
 
 	log.Println("Loading students.")
-	err := LoadStudents()
-	if err != nil {
+	if err := LoadStudents(); err != nil {
 		log.Println(err.Error())
 	}
+
 	log.Println("Loading assignments.")
-	err = LoadAssignments(&assignments)
-	if err != nil {
+	if err := LoadAssignments(&assignments); err != nil {
 		log.Println(err.Error())
 	}
 
@@ -157,6 +176,6 @@ func main() {
 	// http.Handle("/home/homeworks/", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
 
 	log.Println("Server is listening on port 8080")
-	err = http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
 	log.Println(err.Error())
 }
