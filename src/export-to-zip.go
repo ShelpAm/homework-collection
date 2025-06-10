@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 )
 
-// Define the FileData struct
 func MakeZip(out string, dir string) error {
 	zipFile, err := os.Create(out)
 	if err != nil {
@@ -26,13 +25,21 @@ func MakeZip(out string, dir string) error {
 		}
 
 		if !info.IsDir() {
+			// Compute the relative path for the zip entry
+			relPath, err := filepath.Rel(dir, path)
+			if err != nil {
+				return err
+			}
+
+			// Open the file
 			file, err := os.Open(path)
 			if err != nil {
 				return err
 			}
 			defer file.Close()
 
-			writer, err := zipWriter.Create(path)
+			// Create zip entry with relative path
+			writer, err := zipWriter.Create(relPath)
 			if err != nil {
 				return err
 			}
@@ -42,7 +49,6 @@ func MakeZip(out string, dir string) error {
 				return err
 			}
 		}
-
 		return nil
 	})
 }
@@ -53,18 +59,19 @@ func ExportToZip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	os.Mkdir("zip", 0755)
-	zipPath := "zip/exported.zip"
-	os.Remove(zipPath)
+	tmpDir := filepath.Join(dataDir, "zip")
+	os.Mkdir(tmpDir, 0755)
+	zipFile := filepath.Join(tmpDir, "exported.zip")
+	os.Remove(zipFile)
 
-	if err := MakeZip(zipPath, "homeworks"); err != nil {
-		http.Error(w, "Cannot make zip file, 请联系服务器管理员。", http.StatusInternalServerError)
-		log.Println("Cannot make zip file" + err.Error())
+	if err := MakeZip(zipFile, homeworksDir); err != nil {
+		http.Error(w, "Failed to make zip file, 请联系服务器管理员。"+err.Error(), http.StatusInternalServerError)
+		log.Println("Failed to make zip file: " + err.Error())
 	}
 
 	w.Header().Set("Content-Disposition", "attachment; filename=exported.zip")
 	w.Header().Set("Content-Type", "application/zip")
-	http.ServeFile(w, r, zipPath)
+	http.ServeFile(w, r, zipFile)
 
 	log.Println("Zip was exported successfully")
 }

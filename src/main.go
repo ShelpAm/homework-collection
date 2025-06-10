@@ -40,6 +40,7 @@ var (
 		}
 		return filepath.Join(home, ".local", "share", "homework-collection")
 	}()
+	homeworksDir = filepath.Join(dataDir, "homeworks")
 )
 
 // 每分钟清除所有 IP 的访问计数
