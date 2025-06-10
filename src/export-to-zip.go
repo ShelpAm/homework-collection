@@ -57,10 +57,9 @@ func ExportToZip(w http.ResponseWriter, r *http.Request) {
 	zipPath := "zip/exported.zip"
 	os.Remove(zipPath)
 
-	err := MakeZip(zipPath, "homeworks")
-	if err != nil {
+	if err := MakeZip(zipPath, "homeworks"); err != nil {
 		http.Error(w, "Cannot make zip file, 请联系服务器管理员。", http.StatusInternalServerError)
-		log.Println("Cannot make zip file")
+		log.Println("Cannot make zip file" + err.Error())
 	}
 
 	w.Header().Set("Content-Disposition", "attachment; filename=exported.zip")
