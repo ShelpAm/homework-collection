@@ -4,7 +4,7 @@ Description=Homework Collection Service
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/homework-collection
-Restart=no
+Restart=on-failure
 
 [Install]
 WantedBy=default.target
