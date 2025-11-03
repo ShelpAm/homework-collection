@@ -62,7 +62,7 @@
             /* 使输入框占据更多空间 */
         }
 
-        input[type="submit"] {
+        .button {
             background-color: #007bff;
             color: #fff;
             border: none;
@@ -74,14 +74,39 @@
             transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
         }
 
-        input[type="submit"]:hover {
+        .button:hover {
             background-color: #0056b3;
             transform: scale(1.05);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
 
-        input[type="submit"]:active {
+        .button:active {
             background-color: #004085;
+            transform: scale(1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .button-green {
+            background-color: #28a745;
+            /* 绿色 */
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button-green:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .button-green:active {
+            background-color: #1e7e34;
             transform: scale(1);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
@@ -107,7 +132,20 @@
                 <input type="file" id="file" name="homework" accept=".rar,.zip,.7z,.xz,.gz,.doc,.docx" required>
             </div>
 
-            <input type="submit" value="提交">
+            <!-- <input type="submit" value="提交"> -->
+
+            <!-- New  -->
+            <div class="form-group" style="display:flex; justify-content:center; gap:16px;">
+
+                <button type="submit" class="button">
+                    提交
+                </button>
+
+                <button id="view-submissions" type="button" class="button-green">
+                    提交情况
+                </button>
+
+            </div>
         </form>
     </div>
     <!-- <div><button onclick="queryProgress()">123</button></div> -->
@@ -183,6 +221,10 @@
                 // won't be empty.
                 alert('请先选择一个文件');
             }
+        });
+
+        document.getElementById('view-submissions').addEventListener('click', () => {
+            window.location.href = "/home/list-files";
         });
     </script>
 </body>

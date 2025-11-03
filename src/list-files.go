@@ -48,6 +48,7 @@ func ListFiles(w http.ResponseWriter, _ *http.Request) {
 		<title>File List</title>
 	</head>
 	<body>
+		<a href="/home">Go Back to Home</a>
 		<h1>Files in Directory</h1>
 		<ul>
 			{{range .}}
