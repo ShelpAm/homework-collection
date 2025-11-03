@@ -2,14 +2,17 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type FileData struct {
-	Name string
-	Path string
+	Name         string
+	Path         string
+	LastModified time.Time
 }
 
 func ListFiles(w http.ResponseWriter, _ *http.Request) {
@@ -25,9 +28,14 @@ func ListFiles(w http.ResponseWriter, _ *http.Request) {
 	// Prepare file data to pass to the template
 	var fileData []FileData
 	for _, file := range files {
+		info, err := file.Info()
+		if err != nil {
+			log.Println("An error occurred: ", err)
+		}
 		fileData = append(fileData, FileData{
-			Name: file.Name(),
-			Path: filepath.Join(dir, file.Name()),
+			Name:         file.Name(),
+			Path:         filepath.Join(dir, file.Name()),
+			LastModified: info.ModTime(),
 		})
 	}
 
@@ -43,14 +51,18 @@ func ListFiles(w http.ResponseWriter, _ *http.Request) {
 		<h1>Files in Directory</h1>
 		<ul>
 			{{range .}}
-				<li><a href="/home/homeworks/{{.Name}}">{{.Name}}</a></li>
+				<li><a href="/home/homeworks/{{.Name}}">{{.Name}}</a> Last Modified {{.LastModified | formatTime}}</li>
 			{{end}}
 		</ul>
-    <p>Totally {{len .}} files.</p>
+		<p>Totally {{len .}} files.</p>
 	</body>
 	</html>
 	`
-	t, err := template.New("filelist").Parse(tmpl)
+	formatTimeF := func(t time.Time) string {
+		return t.Format("on 2006-01-02 at 15:04:05")
+	}
+	formatTime := template.FuncMap{"formatTime": formatTimeF}
+	t, err := template.New("filelist").Funcs(formatTime).Parse(tmpl)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return
