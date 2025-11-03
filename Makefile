@@ -25,6 +25,7 @@ install-data:
 
 	install -d $(DATA_DIR)/www/html
 	install www/html/index.html $(DATA_DIR)/www/html/index.html
+	install www/html/axios.min.js $(DATA_DIR)/www/html/axios.min.js
 
 install-systemd:
 	install -d $(SYSTEMD_DIR)
