@@ -110,6 +110,10 @@
             transform: scale(1);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
+
+        .assignment-label {
+            margin-left: 0;
+        }
     </style>
 </head>
 
@@ -118,7 +122,7 @@
         <h1>提交作业</h1>
         <form id="homework-form">
             <div class="form-group">
-                <label for="assignmentName">作业:</label>
+                <label class="assignment-label" for="assignmentName">作业:</label>
                 <select id="assignmentName" name="assignmentName" required></select>
             </div>
 
@@ -180,12 +184,15 @@
 
                 assignments.forEach(item => {
                     const now = new Date();
-                    const name = item.Name;
+                    var name = item.Name;
                     const begin = new Date(item.BeginTime);
                     const end = new Date(item.EndTime);
 
                     const opt = document.createElement('option');
                     opt.value = name;
+                    if (name == "五个一") {
+                        name = "数据库";
+                    }
                     opt.textContent = `${name} (${begin.toLocaleDateString()} - ${end.toLocaleDateString()})`;
 
                     if (now < begin || now > end) {
