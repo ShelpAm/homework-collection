@@ -117,6 +117,13 @@
     <div class="container">
         <h1>提交作业</h1>
         <form id="homework-form">
+            <!-- <div class="form-group"> -->
+            <!--     <label for="assignmentName">作业类型:</label> -->
+            <!--     <select id="assignmentName" name="assignmentName" required> -->
+            <!--     </select> -->
+            <!-- </div> -->
+
+
             <div class="form-group">
                 <label for="username">姓名:</label>
                 <input type="text" id="username" name="username" required>
@@ -132,9 +139,6 @@
                 <input type="file" id="file" name="homework" accept=".rar,.zip,.7z,.xz,.gz,.doc,.docx" required>
             </div>
 
-            <!-- <input type="submit" value="提交"> -->
-
-            <!-- New  -->
             <div class="form-group" style="display:flex; justify-content:center; gap:16px;">
 
                 <button type="submit" class="button">
@@ -149,8 +153,8 @@
         </form>
     </div>
     <!-- <div><button onclick="queryProgress()">123</button></div> -->
-    <!-- TIME OUT <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
-    <script src="axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- <script src="axios.min.js"></script> -->
     <script>
         async function queryProgress(taskId) {
             const formData = new FormData();
@@ -167,6 +171,37 @@
             }
         }
 
+        async function loadAssignmentList() {
+            try {
+                const response = await axios.get('/api/assignments');
+                const assignments = response.data;
+
+                const select = document.getElementById('assignmentName');
+                select.innerHTML = '<option value="">请选择作业</option>';
+
+                assignments.forEach(item => {
+                    const now = new Date();
+                    const name = item.Name;
+                    const begin = new Date(item.BeginTime);
+                    const end = new Date(item.EndTime);
+
+                    const opt = document.createElement('option');
+                    opt.value = item.name;
+                    opt.textContent = `${name} (${begin.toLocaleDateString()} - ${end.toLocaleDateString()})`;
+
+                    if (now < begin || now > end) {
+                        opt.disabled = true;
+                        opt.textContent += " ❌已关闭";
+                    }
+
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Error loading assignments:", err);
+                alert("无法获取作业列表，请联系管理员");
+            }
+        }
+
         document.getElementById('homework-form').addEventListener('submit', function (event) {
             event.preventDefault();
 
@@ -174,16 +209,17 @@
             const fileInput = document.getElementById('file');
             const usernameInput = document.getElementById('username');
             const schoolIdInput = document.getElementById('schoolId');
+            const assignmentSelect = document.getElementById('assignmentName');
 
             if (fileInput.files.length > 0) {
                 formData.append('homework', fileInput.files[0]);
                 formData.append('username', usernameInput.value);
                 formData.append('schoolId', schoolIdInput.value);
-                formData.append('assignmentName', '五个一')
+                // formData.append('assignmentName', ssignmentSelect.value);
+                formData.append('assignmentName', '五个一');
 
-                // try {
-                //
-                // }
+                console.log('formData: ' + formData);
+
                 axios.post('/api/process-homework/', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data'
@@ -192,7 +228,6 @@
                     .then((response) => {
                         console.log(response.data);
                         const taskId = response.data;
-
 
                         setTimeout(() => {
                             alert('Uploading your homework, please wait. (ID:' + taskId + ')')
@@ -227,6 +262,8 @@
         document.getElementById('view-submissions').addEventListener('click', () => {
             window.location.href = "/home/list-files";
         });
+
+        loadAssignmentList();
     </script>
 </body>
 
