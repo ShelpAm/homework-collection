@@ -117,11 +117,10 @@
     <div class="container">
         <h1>提交作业</h1>
         <form id="homework-form">
-            <!-- <div class="form-group"> -->
-            <!--     <label for="assignmentName">作业类型:</label> -->
-            <!--     <select id="assignmentName" name="assignmentName" required> -->
-            <!--     </select> -->
-            <!-- </div> -->
+            <div class="form-group">
+                <label for="assignmentName">作业:</label>
+                <select id="assignmentName" name="assignmentName" required></select>
+            </div>
 
 
             <div class="form-group">
@@ -186,7 +185,7 @@
                     const end = new Date(item.EndTime);
 
                     const opt = document.createElement('option');
-                    opt.value = item.name;
+                    opt.value = name;
                     opt.textContent = `${name} (${begin.toLocaleDateString()} - ${end.toLocaleDateString()})`;
 
                     if (now < begin || now > end) {
@@ -215,8 +214,10 @@
                 formData.append('homework', fileInput.files[0]);
                 formData.append('username', usernameInput.value);
                 formData.append('schoolId', schoolIdInput.value);
-                // formData.append('assignmentName', ssignmentSelect.value);
-                formData.append('assignmentName', '五个一');
+                formData.append('assignmentName', assignmentSelect.value);
+                console.log("assignmentSelect=" + assignmentSelect);
+                console.log("assignmentSelect.value=" + assignmentSelect.value);
+                // formData.append('assignmentName', '五个一');
 
                 console.log('formData: ' + formData);
 

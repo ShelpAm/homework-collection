@@ -98,6 +98,10 @@ func ShowHome(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(dataDir, "www", "html", "index.html"))
 }
 
+func ServeAxios(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(dataDir, "www", "html", "axios.min.js"))
+}
+
 func ShowHomeworks(w http.ResponseWriter, r *http.Request) {
 	// TODO: implement this
 }
@@ -167,12 +171,14 @@ func main() {
 
 	startRateLimitReset()
 	http.Handle("/", http.HandlerFunc(RedirectToHome))
+	http.Handle("POST /auth/login/", RateLimit(http.HandlerFunc(ShowLogin)))
 	http.Handle("POST /api/process-homework/", RateLimit(http.HandlerFunc(ProcessHomework)))
 	http.Handle("POST /api/progress/", RateLimit(http.HandlerFunc(GetProgress)))
+	http.Handle("/api/assignments/", RateLimit(http.HandlerFunc(ListAssignments)))
 	http.Handle("/api/export-to-zip/", RateLimit(http.HandlerFunc(ExportToZip)))
-	http.Handle("POST /auth/login/", RateLimit(http.HandlerFunc(ShowLogin)))
 	http.Handle("/home/", http.HandlerFunc(ShowHome))
-	http.Handle("/home/homeworks/", http.HandlerFunc(ListFiles))
+	http.Handle("/home/axios.min.js", http.HandlerFunc(ServeAxios))
+	http.Handle("/home/homeworks/", http.HandlerFunc(ServeHomework))
 	http.Handle("/home/list-files/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/home/homeworks", http.StatusFound) }))
 	// http.Handle("/home/homeworks/", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
 

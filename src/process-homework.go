@@ -83,7 +83,7 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 		log.Println("Successfully finished task " + id.String())
 	})
 	if err != nil {
-		log.Println("Failed to submit file: " + err.Error())
+		log.Println(username + " Failed to submit file: " + err.Error())
 		http.Error(w, "Failed to submit file: "+err.Error()+", please contact server admin (yyx).", http.StatusInternalServerError)
 		return
 	}

@@ -15,7 +15,10 @@ type FileData struct {
 	LastModified time.Time
 }
 
-func ListFiles(w http.ResponseWriter, _ *http.Request) {
+func ServeHomework(w http.ResponseWriter, r *http.Request) {
+	// if r.URL.String()
+	http.ServeFile(w, r, filepath.Join(homeworksDir))
+
 	dir := filepath.Join(dataDir, "./homeworks/五个一") // Change this for listed directory
 
 	// Read directory contents

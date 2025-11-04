@@ -65,7 +65,7 @@ func (a *Assignment) Path() string {
 
 func (a *Assignment) Receive(s *Student, r SizeableReader, filename string, onFinish func(TaskId)) (TaskId, error) {
 	if now := time.Now(); now.Before(a.BeginTime) || now.After(a.EndTime) {
-		return TaskId{}, errors.New("Submission time out of bound (作业提交超出时限)")
+		return TaskId{}, errors.New("Submission too late (作业提交超出时限)")
 	}
 
 	baseDir := filepath.Join(dataDir, a.Path(), s.Account.SchoolId+s.Account.Name)
