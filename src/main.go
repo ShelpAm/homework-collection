@@ -90,6 +90,9 @@ func ShowLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShowHome(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/submit", 302)
+	return
+
 	if r.URL.Path != "/home/" {
 		http.NotFound(w, r)
 		return
@@ -102,16 +105,13 @@ func ServeAxios(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(dataDir, "www", "html", "axios.min.js"))
 }
 
-func ShowHomeworks(w http.ResponseWriter, r *http.Request) {
-	// TODO: implement this
-}
-
 func GetProgress(w http.ResponseWriter, r *http.Request) {
 	taskId := r.FormValue("taskId")
 
 	progress, err := fileUploader.GetProgress(taskId)
 
 	if err != nil {
+		log.Println("error: " + err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -172,14 +172,16 @@ func main() {
 	startRateLimitReset()
 	http.Handle("/", http.HandlerFunc(RedirectToHome))
 	http.Handle("POST /auth/login/", RateLimit(http.HandlerFunc(ShowLogin)))
-	http.Handle("POST /api/process-homework/", RateLimit(http.HandlerFunc(ProcessHomework)))
-	http.Handle("POST /api/progress/", RateLimit(http.HandlerFunc(GetProgress)))
-	http.Handle("/api/assignments/", RateLimit(http.HandlerFunc(ListAssignments)))
-	http.Handle("/api/export-to-zip/", RateLimit(http.HandlerFunc(ExportToZip)))
+	http.Handle("POST /api/process-homework", RateLimit(http.HandlerFunc(ProcessHomework)))
+	http.Handle("POST /api/progress", RateLimit(http.HandlerFunc(GetProgress)))
+	http.Handle("GET /api/assignments", RateLimit(http.HandlerFunc(ListAssignments)))
+	http.Handle("GET /api/submissions", RateLimit(http.HandlerFunc(ListSubmissions)))
+	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(ExportToZip)))
 	http.Handle("/home/", http.HandlerFunc(ShowHome))
 	http.Handle("/home/axios.min.js", http.HandlerFunc(ServeAxios))
-	http.Handle("/home/homeworks/", http.HandlerFunc(ServeHomework))
-	http.Handle("/home/list-files/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/home/homeworks", http.StatusFound) }))
+	// http.Handle("/home/homeworks/", http.HandlerFunc(ServeAssignments))
+	http.Handle("/home/homeworks/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/assignments", http.StatusFound) }))
+	http.Handle("/home/list-files/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/assignments", http.StatusFound) }))
 	// http.Handle("/home/homeworks/", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
 
 	log.Println("Server is listening on port 8080")

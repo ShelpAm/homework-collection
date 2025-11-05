@@ -12,9 +12,11 @@ func ListAssignments(w http.ResponseWriter, _ *http.Request) {
 
 	list := make([]Assignment, 0, len(assignments))
 	for _, a := range assignments {
-		a.BeginTime = a.BeginTime.Truncate(time.Second)
-		a.EndTime = a.EndTime.Truncate(time.Second)
-		list = append(list, a)
+		list = append(list, Assignment{
+			a.Name,
+			a.BeginTime.Truncate(time.Second),
+			a.EndTime.Truncate(time.Second),
+		})
 	}
 
 	sort.Slice(list, func(i, j int) bool {

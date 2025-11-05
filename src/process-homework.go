@@ -20,11 +20,11 @@ type ProcessHomeworkResult struct {
 	TaskId TaskId
 }
 
+// return:
+//
+//	ProcessHomeworkResult
 func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 	// log.Println("ProcessHomework request received.")
-	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
 
 	// Authenticates student's info.
@@ -88,5 +88,5 @@ func ProcessHomework(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(taskId)
+	json.NewEncoder(w).Encode(ProcessHomeworkResult{TaskId: taskId})
 }
