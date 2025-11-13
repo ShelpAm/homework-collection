@@ -53,18 +53,16 @@ func MakeZip(out string, dir string) error {
 	})
 }
 
-func ExportToZip(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Invalid request method, please use GET", http.StatusBadRequest)
-		return
-	}
-
+func Export(w http.ResponseWriter, r *http.Request) {
 	tmpDir := filepath.Join(dataDir, "zip")
 	os.Mkdir(tmpDir, 0755)
 	zipFile := filepath.Join(tmpDir, "exported.zip")
 	os.Remove(zipFile)
 
-	if err := MakeZip(zipFile, homeworksDir); err != nil {
+	assignment := r.URL.Query().Get("assignment")
+	assignmentDir := filepath.Join(homeworksDir, assignment)
+
+	if err := MakeZip(zipFile, assignmentDir); err != nil {
 		http.Error(w, "Failed to make zip file, 请联系服务器管理员。"+err.Error(), http.StatusInternalServerError)
 		log.Println("Failed to make zip file: " + err.Error())
 	}

@@ -92,13 +92,6 @@ func ShowLogin(w http.ResponseWriter, r *http.Request) {
 func ShowHome(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/submit", 302)
 	return
-
-	if r.URL.Path != "/home/" {
-		http.NotFound(w, r)
-		return
-	}
-
-	http.ServeFile(w, r, filepath.Join(dataDir, "www", "html", "index.html"))
 }
 
 func ServeAxios(w http.ResponseWriter, r *http.Request) {
@@ -175,8 +168,11 @@ func main() {
 	http.Handle("POST /api/process-homework", RateLimit(http.HandlerFunc(ProcessHomework)))
 	http.Handle("POST /api/progress", RateLimit(http.HandlerFunc(GetProgress)))
 	http.Handle("GET /api/assignments", RateLimit(http.HandlerFunc(ListAssignments)))
+	http.Handle("GET /api/assignments/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/api/assignments", http.StatusFound)
+	}))
 	http.Handle("GET /api/submissions", RateLimit(http.HandlerFunc(ListSubmissions)))
-	http.Handle("/api/export-to-zip", RateLimit(http.HandlerFunc(ExportToZip)))
+	http.Handle("GET /api/export", RateLimit(http.HandlerFunc(Export)))
 	http.Handle("/home/", http.HandlerFunc(ShowHome))
 	http.Handle("/home/axios.min.js", http.HandlerFunc(ServeAxios))
 	// http.Handle("/home/homeworks/", http.HandlerFunc(ServeAssignments))
@@ -185,6 +181,6 @@ func main() {
 	// http.Handle("/home/homeworks/", http.StripPrefix("/home/homeworks", http.FileServer(http.Dir("./homeworks"))))
 
 	log.Println("Server is listening on port 8080")
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe("localhost:8080", nil)
 	log.Println(err.Error())
 }
